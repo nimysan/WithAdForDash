@@ -3,6 +3,20 @@
 import fetch from 'node-fetch';
 
 /**
+ * 将ArrayBuffer转换为Base64字符串
+ * @param {ArrayBuffer} buffer - 要转换的ArrayBuffer
+ * @returns {string} - Base64字符串
+ */
+function arrayBufferToBase64(buffer) {
+  const uint8Array = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < uint8Array.length; i++) {
+    binary += String.fromCharCode(uint8Array[i]);
+  }
+  return Buffer.from(binary, 'binary').toString('base64');
+}
+
+/**
  * Lambda@Edge ViewerRequest事件处理函数
  * @param {Object} event - CloudFront事件对象
  * @returns {Object} - 修改后的请求或响应对象
@@ -39,6 +53,7 @@ export const handleViewerRequest = async (event) => {
           // 获取广告内容
           const response = await fetch(ad_content_url);
           const adContent = await response.arrayBuffer();
+          const base64Content = arrayBufferToBase64(adContent);
           
           // 返回广告内容
           return {
@@ -54,7 +69,7 @@ export const handleViewerRequest = async (event) => {
                 value: adContent.byteLength.toString()
               }]
             },
-            body: adContent.toString('base64'),
+            body: base64Content,
             bodyEncoding: 'base64'
           };
         } catch (error) {

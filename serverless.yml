@@ -16,12 +16,14 @@ functions:
     memorySize: 128
     timeout: 5
     # Lambda@Edge配置
-    edges:
-      - eventType: viewer-request
-        distribution: ${param:DISTRIBUTION_ID, ''}
-
-plugins:
-  - serverless-lambda-edge-pre-existing-cloudfront
+    events:
+      - cloudFront:
+          eventType: viewer-request
+          pathPattern: '*'
+          origin:
+            DomainName: ${param:DISTRIBUTION_DOMAIN, 'example.com'}
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
 
 custom:
   # 部署命令示例：

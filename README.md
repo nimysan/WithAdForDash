@@ -55,15 +55,31 @@ serverless deploy \
   --param="DEPLOYMENT_BUCKET=your-deployment-bucket"
 ```
 
-## 本地测试
+## 测试
 
-可以使用以下命令进行本地测试：
+项目提供两种测试方式：
+
+### 1. 单元测试
+
+使用 Jest 进行单元测试：
+
+```bash
+npm test
+```
+
+测试文件位于 `test/handler.test.js`，使用 `test/events/viewer-request.json` 中的事件数据进行测试。
+
+### 2. 本地函数调用
+
+使用 Serverless Framework 在本地模拟 Lambda 函数调用：
 
 ```bash
 npm run local
 ```
 
-测试事件数据位于 `test/events/viewer-request.json`，可以根据需要修改测试数据。
+这将使用 `test/events/viewer-request.json` 中的事件数据来模拟 CloudFront viewer-request 事件。
+
+你可以根据需要修改 `test/events/viewer-request.json` 中的测试数据来测试不同场景。
 
 ## 工作原理
 
@@ -100,5 +116,6 @@ npm run local
 ├── src/
 │   └── handler.js      # Lambda函数处理程序
 └── test/
+    ├── handler.test.js # Jest 测试文件
     └── events/         # 测试事件数据
         └── viewer-request.json
