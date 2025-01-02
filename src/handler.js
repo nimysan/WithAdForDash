@@ -51,6 +51,7 @@ export const handleViewerRequest = async (event) => {
       if (Number(chunkNumber) % 20 === 0) {
         try {
           // 获取广告内容
+          ad_content_url = "https://dash.plaza.red/AD001/"+streamId+"-1.m4s";
           const response = await fetch(ad_content_url);
           const adContent = await response.arrayBuffer();
           const base64Content = arrayBufferToBase64(adContent);

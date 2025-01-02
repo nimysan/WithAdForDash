@@ -22,38 +22,63 @@
 
 ## 开发环境设置
 
-1. 安装依赖：
+1. 全局安装 Serverless Framework：
+```bash
+npm install -g serverless
+```
+
+2. 安装项目依赖：
 ```bash
 npm install
 ```
 
-2. 配置AWS凭证：
+3. 配置AWS凭证：
 ```bash
 aws configure
 ```
 
-3. 更新serverless.yml中的配置：
-   - CloudFront Distribution ID
-   - 部署桶名称（deploymentBucket）
+4. 准备 CloudFront 配置：
+   - 确保已创建 CloudFront Distribution
+   - 获取 Distribution ID（在 CloudFront 控制台可以找到）
+   - 确保 Distribution 处于 Deployed 状态
 
 ## 配置参数
 
 项目使用以下配置参数：
 
-- BAD_CLIENT_IP_SET: 需要处理的IP地址列表，以逗号分隔
-- AD_CONTENT_URL: 广告内容的URL地址
-- DEPLOYMENT_BUCKET: 部署用的S3桶名称
+- BAD_CLIENT_IP_SET: 需要处理的IP地址列表，以逗号分隔（默认值：'127.0.0.1'）
+- AD_CONTENT_URL: 广告内容的URL地址（默认值：'https://example.com/ad.mp4'）
+- DEPLOYMENT_BUCKET: 部署用的S3桶名称（默认值：'your-deployment-bucket'）
+- DISTRIBUTION_ID: 已存在的 CloudFront Distribution ID（必填，无默认值）
 
 ## 部署
 
-使用以下命令部署，需要提供必要的参数：
+### 版本管理
+
+由于 Lambda@Edge 函数的特殊性，删除已关联到 CloudFront Distribution 的函数可能会遇到困难。为了避免删除问题：
+
+1. 每次重大更新时使用新的函数名（在 serverless.yml 中修改函数名，如 viewerRequestV2）
+2. 新函数部署成功后，在 CloudFront 控制台手动删除旧函数关联
+3. 等待 CloudFront 完成部署（状态变为 Deployed）后，才能删除旧函数
+4. 如果遇到删除错误，请等待几小时后重试，确保 CloudFront 在所有边缘位置都完成了更新
+
+### 部署命令
+
+本项目只能部署到已存在的 CloudFront Distribution 上。使用以下命令部署：
 
 ```bash
+# 使用新的函数名部署（当前为 viewerRequestV2）
 serverless deploy \
   --param="BAD_CLIENT_IP_SET=1.1.1.1,2.2.2.2" \
   --param="AD_CONTENT_URL=https://example.com/ad.mp4" \
-  --param="DEPLOYMENT_BUCKET=your-deployment-bucket"
+  --param="DEPLOYMENT_BUCKET=your-deployment-bucket" \
+  --param="DISTRIBUTION_ID=EXXXXXXXXXXXXX"
 ```
+
+如果提供的 Distribution ID 不存在，部署将失败并显示错误信息。请确保：
+1. Distribution ID 正确且存在
+2. 该 Distribution 处于 Deployed 状态
+3. 你有权限修改该 Distribution
 
 ## 测试
 

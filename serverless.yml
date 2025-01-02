@@ -10,23 +10,20 @@ provider:
     BAD_CLIENT_IP_SET: ${param:BAD_CLIENT_IP_SET, '127.0.0.1'}
     AD_CONTENT_URL: ${param:AD_CONTENT_URL, 'https://example.com/ad.mp4'}
 
+plugins:
+  - serverless-lambda-edge-pre-existing-cloudfront
+
 functions:
-  viewerRequest:
+  viewerRequestV2:
     handler: src/handler.handleViewerRequest
     memorySize: 128
     timeout: 5
     # Lambda@Edge配置
-    events:
-      - cloudFront:
-          eventType: viewer-request
-          pathPattern: '*'
-          origin:
-            DomainName: ${param:DISTRIBUTION_DOMAIN, 'example.com'}
-            CustomOriginConfig:
-              OriginProtocolPolicy: https-only
+    lambdaAtEdge:
+      distribution: ${param:DISTRIBUTION_ID}
+      eventType: viewer-request
+      pathPattern: '*'
 
 custom:
-  # 部署命令示例：
-  # serverless deploy --param="BAD_CLIENT_IP_SET=1.1.1.1,2.2.2.2" --param="AD_CONTENT_URL=https://example.com/ad.mp4"
   deploymentBucket:
     name: ${param:DEPLOYMENT_BUCKET, 'your-deployment-bucket'}
