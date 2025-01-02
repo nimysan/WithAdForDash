@@ -1,0 +1,30 @@
+service: with-ad-for-dash
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1 # Lambda@Edge必须部署在us-east-1
+  environment:
+    # 注意：Lambda@Edge不支持环境变量，这些值会在构建时被注入到代码中
+    BAD_CLIENT_IP_SET: ${param:BAD_CLIENT_IP_SET, '127.0.0.1'}
+    AD_CONTENT_URL: ${param:AD_CONTENT_URL, 'https://example.com/ad.mp4'}
+
+functions:
+  viewerRequest:
+    handler: src/handler.handleViewerRequest
+    memorySize: 128
+    timeout: 5
+    # Lambda@Edge配置
+    edges:
+      - eventType: viewer-request
+        distribution: ${param:DISTRIBUTION_ID, ''}
+
+plugins:
+  - serverless-lambda-edge-pre-existing-cloudfront
+
+custom:
+  # 部署命令示例：
+  # serverless deploy --param="BAD_CLIENT_IP_SET=1.1.1.1,2.2.2.2" --param="AD_CONTENT_URL=https://example.com/ad.mp4"
+  deploymentBucket:
+    name: ${param:DEPLOYMENT_BUCKET, 'your-deployment-bucket'}
