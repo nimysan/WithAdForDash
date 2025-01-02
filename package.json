@@ -22,9 +22,11 @@
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
+    "@silvermine/serverless-plugin-cloudfront-lambda-edge": "2.2.3",
     "eslint": "^8.0.0",
     "jest": "^29.0.0",
     "serverless": "^3.0.0",
-    "serverless-lambda-edge-pre-existing-cloudfront": "^1.2.0"
+    "serverless-lambda-edge-pre-existing-cloudfront": "^1.2.0",
+    "serverless-plugin-cloudfront-lambda-edge": "^2.1.0"
   }
 }
