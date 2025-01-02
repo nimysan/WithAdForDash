@@ -8,7 +8,7 @@
     "test": "jest",
     "lint": "eslint .",
     "deploy": "serverless deploy",
-    "local": "serverless invoke local --function viewerRequest --path test/events/viewer-request.json",
+    "local": "serverless invoke local --function viewerRequestV2 --path test/events/viewer-request.json --param DISTRIBUTION_ID=E123456789ABCD",
     "remove": "serverless remove"
   },
   "keywords": [

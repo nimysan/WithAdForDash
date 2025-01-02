@@ -31,7 +31,7 @@ export const handleViewerRequest = async (event) => {
     
     // 从环境变量获取配置
     const bad_client_ip_set = process.env.BAD_CLIENT_IP_SET || '';
-    const ad_content_url = process.env.AD_CONTENT_URL || '';
+    let ad_content_url = process.env.AD_CONTENT_URL || '';
     
     console.log("clientIP " + clientIP);
     console.log("bad_client_ip_set: " + bad_client_ip_set);
