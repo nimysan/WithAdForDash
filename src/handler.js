@@ -27,14 +27,15 @@ export const handleViewerRequest = async (event) => {
   const uri = request.uri;
   
   try {
-    console.log("request " + JSON.stringify(request));
+    console.log("[REQUEST] Full request object:", JSON.stringify(request, null, 2));
+    console.log("[CONFIG] Processing request for URI:", uri);
     
     // 硬编码配置值
     const bad_client_ip_set = '1.2.3.4,54.240.199.97';
     let ad_content_url = 'https://dash.plaza.red/AD001';
     
-    console.log("clientIP " + clientIP);
-    console.log("bad_client_ip_set: " + bad_client_ip_set);
+    console.log("[IP CHECK] Client IP:", clientIP);
+    console.log("[IP CHECK] Allowed IPs:", bad_client_ip_set);
     
     const allowedIPs = bad_client_ip_set.split(",");
     
@@ -42,19 +43,35 @@ export const handleViewerRequest = async (event) => {
     const uriRegex = /\/TVD(\d+)\/.*chunk-stream(\d+)-(\d+)\.m4s/;
     const match = uri.match(uriRegex);
     
-    if (match && allowedIPs.includes(clientIP)) {
+    if (match) {
+      console.log("[URI MATCH] Found DASH segment pattern in URI");
+      console.log("[URI MATCH] Full match:", match[0]);
+      console.log("[URI MATCH] TVD ID:", match[1]);
       const streamId = match[2];
       const chunkNumber = match[3];
-      console.log("Stream ID:" + streamId);
-      console.log("Chunk Number:" + chunkNumber);
+      console.log("[STREAM INFO] Stream ID:", streamId);
+      console.log("[STREAM INFO] Chunk Number:", chunkNumber);
+      
+      if (!allowedIPs.includes(clientIP)) {
+        console.log("[IP CHECK] Client IP not in allowed list, passing through original request");
+        return request;
+      }
       
       if (Number(chunkNumber) % 20 === 0) {
         try {
           // 获取广告内容
           ad_content_url = "https://dash.plaza.red/AD001/"+streamId+"-1.m4s";
+          console.log("[AD FETCH] Attempting to fetch ad content from:", ad_content_url);
+          
           const response = await fetch(ad_content_url);
+          console.log("[AD FETCH] Response status:", response.status);
+          console.log("[AD FETCH] Response headers:", JSON.stringify(response.headers.raw(), null, 2));
+          
           const adContent = await response.arrayBuffer();
+          console.log("[AD FETCH] Received ad content length:", adContent.byteLength);
+          
           const base64Content = arrayBufferToBase64(adContent);
+          console.log("[AD FETCH] Successfully converted content to base64");
           
           // 返回广告内容
           return {
@@ -74,7 +91,12 @@ export const handleViewerRequest = async (event) => {
             bodyEncoding: 'base64'
           };
         } catch (error) {
-          console.error('Error fetching ad content:', error);
+          console.error('[ERROR] Failed to fetch ad content:', error);
+          console.error('[ERROR] Error details:', {
+            message: error.message,
+            stack: error.stack,
+            url: ad_content_url
+          });
           return request;
         }
       }
@@ -84,7 +106,13 @@ export const handleViewerRequest = async (event) => {
     return request;
     
   } catch (error) {
-    console.error('Error in viewer request handler:', error);
+    console.error('[ERROR] Viewer request handler failed:', error);
+    console.error('[ERROR] Error details:', {
+      message: error.message,
+      stack: error.stack,
+      requestUri: uri,
+      clientIP: clientIP
+    });
     return request; // 发生错误时返回原始请求
   }
 };
