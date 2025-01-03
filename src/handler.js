@@ -85,68 +85,14 @@ export const handleViewerRequest = (event, context, callback) => {
 
       if (Number(chunkNumber) % 5 === 0) {
         // 获取广告内容
-        ad_content_url = "/AD001/" + streamId + "-1.m4s";
+        ad_content_url = "/AD001/" + streamId + "-1.m4s?seq="+chunkNumber;
         console.log("[AD FETCH] Attempting to fetch ad content from:", ad_content_url);
 
         request.uri = ad_content_url;
         callback(null, request);
         return;
-
-        // 构建请求头
-        const headers = {
-          'accept': request.headers.accept?.[0]?.value || '*/*',
-          'accept-encoding': request.headers['accept-encoding']?.[0]?.value || 'gzip, deflate, br',
-          'host': 'dash.plaza.red'
-        };
-
-        console.log("[AD FETCH] Request headers:", JSON.stringify(headers, null, 2));
-        return fetch(ad_content_url, {
-          headers: headers,
-          compress: true
-        })
-          .then(adResponse => {
-            console.log("[AD FETCH] Response status:", adResponse.status);
-            console.log("[AD FETCH] Response headers:", JSON.stringify(adResponse.headers.raw(), null, 2));
-            return adResponse.arrayBuffer();
-          })
-          .then(adContent => {
-            console.log("[AD FETCH] Received ad content length:", adContent.byteLength);
-            const base64Content = arrayBufferToBase64(adContent);
-            console.log("[AD FETCH] Successfully converted content to base64");
-
-            // 返回广告内容
-            // 更新响应
-            const m4sResponse = {
-              status: '200',
-              statusDescription: 'OK',
-              headers: {
-                'cache-control': [{
-                  key: 'Cache-Control',
-                  value: 'max-age=100'
-                }],
-                'content-type': [{
-                  key: 'Content-Type',
-                  value: 'application/octet-stream'
-                }]
-              },
-              body: base64Content,
-              bodyEncoding : 'base64'
-            };
-            callback(null, m4sResponse);
-            return
-          })
-          .catch(error => {
-            console.error('[ERROR] Failed to fetch ad content:', error);
-            console.error('[ERROR] Error details:', {
-              message: error.message,
-              stack: error.stack,
-              url: ad_content_url
-            });
-            callback(null, request);
-          });
       }
     }
-
     // 如果不需要替换，返回原始请求
     callback(null, request);
 
