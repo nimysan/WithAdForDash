@@ -32,7 +32,7 @@ resources:
         ManagedPolicyArns:
           - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
-lambdaHashingVersion: 20201221
+# lambdaHashingVersion: 20201221
 
 plugins:
        - serverless-lambda-edge-pre-existing-cloudfront

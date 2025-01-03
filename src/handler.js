@@ -17,21 +17,45 @@ function arrayBufferToBase64(buffer) {
 }
 
 /**
- * Lambda@Edge ViewerRequest事件处理函数
+ * Lambda@Edge ViewerResponse事件处理函数
  * @param {Object} event - CloudFront事件对象
- * @returns {Object} - 修改后的请求或响应对象
+ * @returns {Object} - 修改后的响应对象
  */
 export const handleViewerRequest = async (event) => {
   const request = event.Records[0].cf.request;
-  const clientIP = request.clientIp;
+  const response = event.Records[0].cf.response;
   const uri = request.uri;
   
   try {
-    console.log("[REQUEST] Full request object:", JSON.stringify(request, null, 2));
-    console.log("[CONFIG] Processing request for URI:", uri);
+    console.log("[RESPONSE] Original response:", JSON.stringify(response, null, 2));
+    console.log("[CONFIG] Processing response for URI:", uri);
+
+    // 检查是否是MPD文件
+    if (uri.endsWith('.mpd')) {
+      /*
+     * Generate HTTP OK response using 200 status code with HTML body.
+     */
+      const response = {
+          status: '200',
+          statusDescription: 'OK',
+          headers: {
+              'cache-control': [{
+                  key: 'Cache-Control',
+                  value: 'max-age=100'
+              }],
+              'content-type': [{
+                  key: 'Content-Type',
+                  value: 'text/html'
+              }]
+          },
+          body: "hello-world",
+      };      
+      console.log("[MPD] Modified response:", JSON.stringify(response, null, 2));
+      return response;
+    }
     
     // 硬编码配置值
-    const bad_client_ip_set = '1.2.3.4,54.240.199.97';
+    const bad_client_ip_set = '1.2.3.4,54.240.199.97,18.140.246.140';
     let ad_content_url = 'https://dash.plaza.red/AD001';
     
     console.log("[IP CHECK] Client IP:", clientIP);
@@ -52,44 +76,45 @@ export const handleViewerRequest = async (event) => {
       console.log("[STREAM INFO] Stream ID:", streamId);
       console.log("[STREAM INFO] Chunk Number:", chunkNumber);
       
-      if (!allowedIPs.includes(clientIP)) {
-        console.log("[IP CHECK] Client IP not in allowed list, passing through original request");
-        return request;
-      }
+      // if (!allowedIPs.includes(clientIP)) {
+      //   console.log("[IP CHECK] Client IP not in allowed list, passing through original request");
+      //   return response;
+      // }
       
-      if (Number(chunkNumber) % 20 === 0) {
+      if (Number(chunkNumber) % 5 === 0) {
         try {
           // 获取广告内容
           ad_content_url = "https://dash.plaza.red/AD001/"+streamId+"-1.m4s";
           console.log("[AD FETCH] Attempting to fetch ad content from:", ad_content_url);
           
-          const response = await fetch(ad_content_url);
-          console.log("[AD FETCH] Response status:", response.status);
-          console.log("[AD FETCH] Response headers:", JSON.stringify(response.headers.raw(), null, 2));
+          // 构建请求头
+          const headers = {
+            'accept': request.headers.accept?.[0]?.value || '*/*',
+            'accept-encoding': request.headers['accept-encoding']?.[0]?.value || 'gzip, deflate, br',
+            'host': 'dash.plaza.red'
+          };
           
-          const adContent = await response.arrayBuffer();
+          console.log("[AD FETCH] Request headers:", JSON.stringify(headers, null, 2));
+          const adResponse = await fetch(ad_content_url, {
+            headers: headers,
+            compress: true
+          });
+          console.log("[AD FETCH] Response status:", adResponse.status);
+          console.log("[AD FETCH] Response headers:", JSON.stringify(adResponse.headers.raw(), null, 2));
+          
+          const adContent = await adResponse.arrayBuffer();
           console.log("[AD FETCH] Received ad content length:", adContent.byteLength);
           
           const base64Content = arrayBufferToBase64(adContent);
           console.log("[AD FETCH] Successfully converted content to base64");
           
           // 返回广告内容
-          return {
-            status: '200',
-            statusDescription: 'OK',
-            headers: {
-              'content-type': [{
-                key: 'Content-Type',
-                value: 'video/mp4'
-              }],
-              'content-length': [{
-                key: 'Content-Length',
-                value: adContent.byteLength.toString()
-              }]
-            },
-            body: base64Content,
-            bodyEncoding: 'base64'
-          };
+          // 更新响应
+          response.body = "hello";
+          // response['bodyEncoding'] = 'base64';
+          console.log("[---RESPONSE] Full response object:", JSON.stringify(response, null, 2));
+          console.log("Finally Set content to --- hello and return to");
+          return response;
         } catch (error) {
           console.error('[ERROR] Failed to fetch ad content:', error);
           console.error('[ERROR] Error details:', {
@@ -97,13 +122,13 @@ export const handleViewerRequest = async (event) => {
             stack: error.stack,
             url: ad_content_url
           });
-          return request;
+          return response;
         }
       }
     }
     
     // 如果不需要替换，返回原始请求
-    return request;
+    return response;
     
   } catch (error) {
     console.error('[ERROR] Viewer request handler failed:', error);
@@ -113,6 +138,6 @@ export const handleViewerRequest = async (event) => {
       requestUri: uri,
       clientIP: clientIP
     });
-    return request; // 发生错误时返回原始请求
+    return response; // 发生错误时返回原始请求
   }
 };

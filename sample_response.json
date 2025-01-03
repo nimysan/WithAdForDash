@@ -1,0 +1,54 @@
+{
+    "headers": {
+        "date": [
+            {
+                "key": "Date",
+                "value": "Fri, 03 Jan 2025 03:51:25 GMT"
+            }
+        ],
+        "server": [
+            {
+                "key": "Server",
+                "value": "nginx/1.24.0 (Ubuntu)"
+            }
+        ],
+        "last-modified": [
+            {
+                "key": "Last-Modified",
+                "value": "Fri, 03 Jan 2025 03:51:24 GMT"
+            }
+        ],
+        "etag": [
+            {
+                "key": "ETag",
+                "value": "\"67775ebc-115077\""
+            }
+        ],
+        "accept-ranges": [
+            {
+                "key": "Accept-Ranges",
+                "value": "bytes"
+            }
+        ],
+        "vary": [
+            {
+                "key": "Vary",
+                "value": "Origin"
+            }
+        ],
+        "content-type": [
+            {
+                "key": "Content-Type",
+                "value": "application/octet-stream"
+            }
+        ],
+        "content-length": [
+            {
+                "key": "Content-Length",
+                "value": "1134711"
+            }
+        ]
+    },
+    "status": "200",
+    "statusDescription": "OK"
+}
