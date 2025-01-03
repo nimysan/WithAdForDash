@@ -47,11 +47,26 @@ functions:
       - preExistingCloudFront:
         # ---- Mandatory Properties -----
           distributionId: E1UZTGEU927TUF # CloudFront distribution ID you want to associate
-          eventType: viewer-request # Choose event to trigger your Lambda function, which are `viewer-request`, `origin-request`, `origin-response` or `viewer-response`
+          eventType: viewer-request # Choose event to trigger your Lambda function
           pathPattern: '*' # Specifying the CloudFront behavior
           includeBody: false # Whether including body or not within request
         # ---- Optional Property -----
           stage: dev # Specify the stage at which you want this CloudFront distribution to be updated
+          
+  # originResponseV2:
+  #   handler: src/handler.handleOriginResponse
+  #   memorySize: 128
+  #   timeout: 5
+  #   role: !GetAtt LambdaEdgeRole.Arn
+  #   events:
+  #     - preExistingCloudFront:
+  #       # ---- Mandatory Properties -----
+  #         distributionId: E1UZTGEU927TUF # CloudFront distribution ID you want to associate
+  #         eventType: origin-response # Choose event to trigger your Lambda function
+  #         pathPattern: '*' # Specifying the CloudFront behavior
+  #         includeBody: false # Whether including body or not within request
+  #       # ---- Optional Property -----
+  #         stage: dev # Specify the stage at which you want this CloudFront distribution to be updated
 
 custom:
   deploymentBucket: 'with-ad-for-dash-deployment'

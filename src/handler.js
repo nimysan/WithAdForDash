@@ -21,6 +21,26 @@ function arrayBufferToBase64(buffer) {
  * @param {Object} event - CloudFront事件对象
  * @returns {Object} - 修改后的响应对象
  */
+export const handleOriginResponse = (event, context, callback) => {
+  const request = event.Records[0].cf.request;
+  const response = event.Records[0].cf.response;
+  
+  try {
+    console.log("[ORIGIN RESPONSE] Original response:", JSON.stringify(response, null, 2));
+    
+    // Return the response unmodified
+    return response;
+    
+  } catch (error) {
+    console.error('[ERROR] Origin response handler failed:', error);
+    console.error('[ERROR] Error details:', {
+      message: error.message,
+      stack: error.stack
+    });
+    return response;
+  }
+};
+
 export const handleViewerRequest = (event, context, callback) => {
   const request = event.Records[0].cf.request;
   const response = event.Records[0].cf.response;
@@ -65,8 +85,12 @@ export const handleViewerRequest = (event, context, callback) => {
 
       if (Number(chunkNumber) % 5 === 0) {
         // 获取广告内容
-        ad_content_url = "https://dash.plaza.red/AD001/" + streamId + "-1.m4s";
+        ad_content_url = "/AD001/" + streamId + "-1.m4s";
         console.log("[AD FETCH] Attempting to fetch ad content from:", ad_content_url);
+
+        request.uri = ad_content_url;
+        callback(null, request);
+        return;
 
         // 构建请求头
         const headers = {
@@ -106,6 +130,7 @@ export const handleViewerRequest = (event, context, callback) => {
                 }]
               },
               body: base64Content,
+              bodyEncoding : 'base64'
             };
             callback(null, m4sResponse);
             return
