@@ -29,9 +29,9 @@ export const handleViewerRequest = async (event) => {
   try {
     console.log("request " + JSON.stringify(request));
     
-    // 从环境变量获取配置
-    const bad_client_ip_set = process.env.BAD_CLIENT_IP_SET || '';
-    let ad_content_url = process.env.AD_CONTENT_URL || '';
+    // 硬编码配置值
+    const bad_client_ip_set = '1.2.3.4,54.240.199.97';
+    let ad_content_url = 'https://dash.plaza.red/AD001';
     
     console.log("clientIP " + clientIP);
     console.log("bad_client_ip_set: " + bad_client_ip_set);

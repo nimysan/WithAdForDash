@@ -5,10 +5,34 @@ provider:
   runtime: nodejs18.x
   stage: ${opt:stage, 'dev'}
   region: us-east-1 # Lambda@Edge必须部署在us-east-1
-  environment:
-    # 注意：Lambda@Edge不支持环境变量，这些值会在构建时被注入到代码中
-    BAD_CLIENT_IP_SET: ${param:BAD_CLIENT_IP_SET, '127.0.0.1'}
-    AD_CONTENT_URL: ${param:AD_CONTENT_URL, 'https://example.com/ad.mp4'}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - lambda:GetFunction
+            - lambda:EnableReplication*
+          Resource: "*"
+
+resources:
+  Resources:
+    LambdaEdgeRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: lambda-edge-role
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+                  - edgelambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+lambdaHashingVersion: 20201221
 
 plugins:
        - serverless-lambda-edge-pre-existing-cloudfront
@@ -18,6 +42,7 @@ functions:
     handler: src/handler.handleViewerRequest
     memorySize: 128
     timeout: 5
+    role: !GetAtt LambdaEdgeRole.Arn
     events:
       - preExistingCloudFront:
         # ---- Mandatory Properties -----
@@ -29,5 +54,4 @@ functions:
           stage: dev # Specify the stage at which you want this CloudFront distribution to be updated
 
 custom:
-  deploymentBucket:
-    name: ${param:DEPLOYMENT_BUCKET, 'your-deployment-bucket'}
+  deploymentBucket: 'with-ad-for-dash-deployment'

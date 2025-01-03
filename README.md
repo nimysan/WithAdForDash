@@ -144,3 +144,9 @@ npm run local
     ├── handler.test.js # Jest 测试文件
     └── events/         # 测试事件数据
         └── viewer-request.json
+
+
+## Quota
+
+1. The function timeout is larger than the maximum allowed for functions that are triggered by a CloudFront event. Current timeout value: 10 seconds. Max allowed timeout value: 5 seconds.
+2. is associating to E1UZTGEU927TUF CloudFront Distribution. waiting for deployed status. ServerlessError: The function cannot have environment variables.
