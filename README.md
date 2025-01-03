@@ -176,6 +176,15 @@ https://github.com/nlopezm/aws-cdk-image-resize
 
 ## m4s内容不播放
 
+## 演示视频
+
+以下视频展示了广告插入的效果：
+
+<video width="100%" controls>
+  <source src="dash-迁入广告.mp4" type="video/mp4">
+  您的浏览器不支持 video 标签。
+</video>
+
 ```bash
 M4S File Analysis Table
 ========================================================================================================================
@@ -185,4 +194,3 @@ chunk-stream2-495693.m4s       | msdh       | 0        | 1        | 1        | 4
 chunk-stream2-495700.m4s       | msdh       | 0        | 1        | 1        | 48000      | 12561408        | 1220     | 88         | 47935   
 
 ```
-

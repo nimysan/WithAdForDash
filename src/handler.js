@@ -85,10 +85,10 @@ export const handleViewerRequest = (event, context, callback) => {
 
       if (Number(chunkNumber) % 5 === 0) {
         // 获取广告内容
-        ad_content_url = "/AD001/" + streamId + "-1.m4s?seq="+chunkNumber;
+        const originalPath = uri.replace('/TVD0002/', '/AD001/');
+        request.uri = originalPath;
         console.log("[AD FETCH] Attempting to fetch ad content from:", ad_content_url);
 
-        request.uri = ad_content_url;
         callback(null, request);
         return;
       }
@@ -101,8 +101,7 @@ export const handleViewerRequest = (event, context, callback) => {
     console.error('[ERROR] Error details:', {
       message: error.message,
       stack: error.stack,
-      requestUri: uri,
-      clientIP: clientIP
+      requestUri: uri
     });
     callback(null, request);
   }
