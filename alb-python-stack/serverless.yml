@@ -1,0 +1,35 @@
+service: alb-python-stack
+
+provider:
+  name: aws
+  runtime: python3.12
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  memorySize: 2048  # 视频处理需要较大内存
+  timeout: 300      # 5分钟超时时间
+
+functions:
+  albHandler:
+    handler: src/handler.handler
+    description: Lambda function to process video with ffmpeg
+    layers:
+      - arn:aws:lambda:us-east-1:390468416359:layer:ffmpeg:2  # 引用下面定义的Layer
+    memorySize: 2048
+    timeout: 300
+
+# resources:
+#   Resources:
+#     FFmpegLambdaLayer:
+#       Type: AWS::Lambda::LayerVersion
+#       Properties:
+#         LayerName: ffmpeg-layer
+#         Description: Layer containing FFmpeg binaries
+#         CompatibleRuntimes:
+#           - python3.12
+#         Content:
+#           S3Bucket: ${self:custom.layerBucket}  # 需要先上传zip到S3
+#           S3Key: ffmpeg-layer.zip
+#         LicenseInfo: GPL
+
+custom:
+  layerBucket: YOUR_BUCKET_NAME  # 替换为你的S3存储桶名称
