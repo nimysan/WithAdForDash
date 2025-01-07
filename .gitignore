@@ -1,4 +1,37 @@
+# Node.js
 node_modules/
-.DS_Store
-.env
+package-lock.json
+
+# Python
+*.pyc
+__pycache__/
+.pytest_cache/
+
+# Media files
+*.m4s
+*.mp4
+*.mpd
+sample_response.json
+
+# Build and deployment
 .serverless/
+dist/
+build/
+
+# Environment
+.env
+.env.*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test files
+test.py
+video_data.ts
