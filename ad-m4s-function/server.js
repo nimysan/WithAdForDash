@@ -4,9 +4,26 @@ const path = require('path');
 const https = require('https');
 const http = require('http');
 const { URL } = require('url');
+const cluster = require('cluster');
+const numCPUs = require('os').cpus().length;
 
 const app = express();
 const port = 3000;
+
+if (cluster.isMaster) {
+  console.log(`Master process ${process.pid} is running`);
+
+  // Fork workers
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork();
+  }
+
+  cluster.on('exit', (worker, code, signal) => {
+    console.log(`Worker ${worker.process.pid} died`);
+    // Replace the dead worker
+    cluster.fork();
+  });
+} else {
 
 /**
  * Parse box header
@@ -152,18 +169,19 @@ app.get('/', (req, res) => {
   res.send('M4S Processing Server');
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+  // Start server
+  app.listen(port, () => {
+    console.log(`Worker ${process.pid} is running on port ${port}`);
+  });
 
-// Handle process termination
-process.on('SIGTERM', () => {
-  console.log('Received SIGTERM, shutting down...');
-  process.exit(0);
-});
+  // Handle process termination
+  process.on('SIGTERM', () => {
+    console.log(`Worker ${process.pid} received SIGTERM, shutting down...`);
+    process.exit(0);
+  });
 
-process.on('SIGINT', () => {
-  console.log('Received SIGINT, shutting down...');
-  process.exit(0);
-});
+  process.on('SIGINT', () => {
+    console.log(`Worker ${process.pid} received SIGINT, shutting down...`);
+    process.exit(0);
+  });
+}
