@@ -9,28 +9,6 @@ const app = express();
 const port = 3000;
 
 /**
- * Download file from URL
- */
-async function downloadFile(url) {
-  return new Promise((resolve, reject) => {
-    const parsedUrl = new URL(url);
-    const client = parsedUrl.protocol === 'https:' ? https : http;
-
-    client.get(url, (res) => {
-      if (res.statusCode !== 200) {
-        reject(new Error(`Failed to download: ${res.statusCode}`));
-        return;
-      }
-
-      const chunks = [];
-      res.on('data', (chunk) => chunks.push(chunk));
-      res.on('end', () => resolve(Buffer.concat(chunks)));
-      res.on('error', reject);
-    }).on('error', reject);
-  });
-}
-
-/**
  * Parse box header
  */
 function parseBoxHeader(buffer, offset) {
@@ -115,7 +93,7 @@ function modifyMoofSequence(buffer, newSequence) {
  * Example: "/AD001/chunk-stream2-86293.m4s" -> { trackId: 2, targetSequence: 86293 }
  */
 function parseM4sPath(path) {
-  const match = path.match(/chunk-stream(\d+)-(\d+)\.m4s$/);
+  const match = path.match(/(\d+)-(\d+)\.m4s$/);
   if (!match) {
     throw new Error('Invalid m4s path format');
   }
@@ -132,15 +110,10 @@ app.get('*.m4s', async (req, res) => {
     const { targetSequence, trackId } = parseM4sPath(req.path);
     console.log(`Track ID: ${trackId}, Target sequence: ${targetSequence}`);
 
-    // Get ad content URL from environment variable
-    const adContentUrl = process.env.ad_content;
-    if (!adContentUrl) {
-      throw new Error('ad_content environment variable is required');
-    }
-
-    // Download m4s file from URL
-    console.log('Downloading from:', adContentUrl);
-    const m4sData = await downloadFile(adContentUrl);
+    // Read original m4s file from local path
+    const originalM4sPath = path.join(__dirname, trackId+'-38304768.m4s');
+    console.log('Reading from:', originalM4sPath);
+    const m4sData = fs.readFileSync(originalM4sPath);
     
     // Parse original m4s info
     console.log('Original M4S Info:');
