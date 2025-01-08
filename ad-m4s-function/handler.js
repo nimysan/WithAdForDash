@@ -2,6 +2,31 @@
 
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+const http = require('http');
+const { URL } = require('url');
+
+/**
+ * Download file from URL
+ */
+async function downloadFile(url) {
+  return new Promise((resolve, reject) => {
+    const parsedUrl = new URL(url);
+    const client = parsedUrl.protocol === 'https:' ? https : http;
+
+    client.get(url, (res) => {
+      if (res.statusCode !== 200) {
+        reject(new Error(`Failed to download: ${res.statusCode}`));
+        return;
+      }
+
+      const chunks = [];
+      res.on('data', (chunk) => chunks.push(chunk));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
 
 /**
  * Parse box header
@@ -91,8 +116,15 @@ module.exports.handler = async (event, context) => {
       throw new Error('target_sequence parameter is required and must be a number');
     }
 
-    // Get m4s data from request body (base64 encoded)
-    const m4sData = Buffer.from(event.body, 'base64');
+    // Get URL and target sequence from request
+    const body = JSON.parse(event.body);
+    if (!body.url) {
+      throw new Error('url is required in request body');
+    }
+
+    // Download m4s file from URL
+    console.log('Downloading from:', body.url);
+    const m4sData = await downloadFile(body.url);
     
     // Parse original m4s info
     console.log('Original M4S Info:');
@@ -133,29 +165,32 @@ module.exports.handler = async (event, context) => {
 // Local testing function
 async function main() {
   if (process.argv.length !== 4) {
-    console.error('Usage: node handler.js <input_m4s_file> <target_sequence>');
+    console.error('Usage: node handler.js <m4s_url> <target_sequence>');
     process.exit(1);
   }
 
-  const inputFile = process.argv[2];
+  const url = process.argv[2];
   const targetSequence = parseInt(process.argv[3], 10);
-  const outputFile = path.join(path.dirname(inputFile), `modified_${path.basename(inputFile)}`);
+  
+  // Extract filename from URL
+  const urlPath = new URL(url).pathname;
+  const filename = path.basename(urlPath);
+  const outputFile = `modified_${filename}`;
 
   try {
-    // Read input file
-    const m4sData = fs.readFileSync(inputFile);
-    
     // Create mock Lambda event
     const event = {
       queryStringParameters: {
         target_sequence: targetSequence.toString()
       },
-      body: m4sData.toString('base64'),
-      isBase64Encoded: true
+      body: JSON.stringify({
+        url: url
+      })
     };
 
     // Call handler
-    console.log(`Processing ${inputFile} with target sequence ${targetSequence}`);
+    console.log(`Processing URL: ${url}`);
+    console.log(`Target sequence: ${targetSequence}`);
     const result = await module.exports.handler(event, {});
 
     if (result.statusCode === 200) {

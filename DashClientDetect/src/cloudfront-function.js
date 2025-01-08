@@ -36,8 +36,8 @@ async function handler(event) {
         const chunkNumber = match[3];
 
         // Insert ad content every 20th chunk
-        if (Number(chunkNumber) % 20 === 0) {
-            const originalPath = uri.replace('/TVD0002/', '/AD001/'); //关键是这里 
+        if (Number(chunkNumber) % 5 === 0) {
+            const originalPath = uri.replace('/TVD0002/', '/generated/'); //关键是这里 
             console.log("[AD FETCH] Original path:", uri);
             request.uri = originalPath;
             console.log("[AD FETCH] Redirecting to ad content:", request.uri);
