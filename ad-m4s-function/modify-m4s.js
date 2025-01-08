@@ -1,4 +1,8 @@
-import axios from 'axios';
+#!/usr/bin/env node
+'use strict';
+
+import fs from 'fs';
+import path from 'path';
 
 /**
  * 解析box的大小和类型
@@ -15,11 +19,17 @@ function parseBoxHeader(buffer, offset) {
 
 /**
  * 修改M4S文件的MOOF序列号
- * @param {Buffer} buffer - 输入buffer
+ * @param {string} inputPath - 输入文件路径
+ * @param {string} outputPath - 输出文件路径
  * @param {number} newSequence - 新的序列号
- * @returns {Buffer} 修改后的buffer
  */
-function modifyMoofSequence(buffer, newSequence) {
+function modifyMoofSequence(inputPath, outputPath, newSequence) {
+  console.log(`\nModifying MOOF sequence in: ${inputPath}`);
+  console.log(`New sequence number: ${newSequence}`);
+  console.log('='.repeat(50));
+
+  // 读取输入文件
+  const buffer = fs.readFileSync(inputPath);
   const modifiedBuffer = Buffer.from(buffer);
   let offset = 0;
   let modified = false;
@@ -35,7 +45,11 @@ function modifyMoofSequence(buffer, newSequence) {
         const subHeader = parseBoxHeader(buffer, currentOffset);
         if (subHeader.type === 'mfhd') {
           // 修改序列号
+          const oldSequence = buffer.readUInt32BE(currentOffset + 12);
           modifiedBuffer.writeUInt32BE(newSequence, currentOffset + 12);
+          console.log('Found MOOF box:');
+          console.log(`- Old sequence number: ${oldSequence}`);
+          console.log(`- New sequence number: ${newSequence}`);
           modified = true;
           break;
         }
@@ -50,52 +64,27 @@ function modifyMoofSequence(buffer, newSequence) {
     throw new Error('No MOOF box found in the file');
   }
 
-  return modifiedBuffer;
+  // 写入修改后的文件
+  fs.writeFileSync(outputPath, modifiedBuffer);
+  console.log(`\nSuccessfully wrote modified file to: ${outputPath}`);
 }
 
-export const handler = async (event) => {
-  try {
-    // 解析请求参数
-    const body = JSON.parse(event.body);
-    const { ad_content, target_segment } = body;
-
-    if (!ad_content || !target_segment) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({
-          message: 'Missing required parameters: ad_content or target_segment'
-        })
-      };
-    }
-
-    // 下载M4S文件
-    const response = await axios.get(ad_content, {
-      responseType: 'arraybuffer'
-    });
-
-    // 修改segment number
-    const buffer = Buffer.from(response.data);
-    const modifiedBuffer = modifyMoofSequence(buffer, target_segment);
-
-    // 返回修改后的文件
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'Content-Disposition': 'attachment; filename="modified.m4s"'
-      },
-      body: modifiedBuffer.toString('base64'),
-      isBase64Encoded: true
-    };
-
-  } catch (error) {
-    console.error('Error:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        message: 'Internal server error',
-        error: error.message
-      })
-    };
+// 主函数
+function main() {
+  const args = process.argv.slice(2);
+  if (args.length !== 3) {
+    console.error('Usage: node modify-m4s.js <input_file> <output_file> <new_sequence>');
+    process.exit(1);
   }
-};
+
+  const [inputFile, outputFile, newSequence] = args;
+  
+  try {
+    modifyMoofSequence(inputFile, outputFile, parseInt(newSequence, 10));
+  } catch (error) {
+    console.error('Error:', error.message);
+    process.exit(1);
+  }
+}
+
+main();
