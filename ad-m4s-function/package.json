@@ -5,7 +5,8 @@
   "main": "handler.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "cdk": "cdk"
+    "m4s":"echo read m4s metadata",
+    "server":"node server.js"
   },
   "dependencies": {
     "aws-cdk-lib": "^2.0.0",
