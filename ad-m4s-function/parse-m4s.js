@@ -192,7 +192,7 @@ function createTableRow(data) {
 
 // 主函数
 function main() {
-  const m4sDir = path.join(process.cwd(), 'm4s');
+  const m4sDir = path.join(process.cwd(), 'AD001');
   
   try {
     const files = fs.readdirSync(m4sDir)
