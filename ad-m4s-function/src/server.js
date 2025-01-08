@@ -6,6 +6,8 @@ const http = require('http');
 const { URL } = require('url');
 const cluster = require('cluster');
 const numCPUs = require('os').cpus().length;
+const { parseM4S, parseM4sPath } = require('../lib/parse-m4s');
+const { modifyMoofSequence } = require('../lib/modify-m4s');
 
 const app = express();
 const port = 3000;
@@ -28,101 +30,6 @@ if (cluster.isPrimary) {
     console.log(`Worker ${worker.process.pid} is online`);
   });
 } else {
-
-/**
- * Parse box header
- */
-function parseBoxHeader(buffer, offset) {
-  const size = buffer.readUInt32BE(offset);
-  const type = buffer.toString('utf8', offset + 4, offset + 8);
-  const largeSize = size === 1 ? buffer.readBigUInt64BE(offset + 8) : BigInt(size);
-  return { size: Number(largeSize), type };
-}
-
-/**
- * Parse M4S file and return box information
- */
-function parseM4S(buffer) {
-  const info = {
-    boxes: [],
-    moofSequence: null
-  };
-  
-  let offset = 0;
-  while (offset < buffer.length) {
-    const header = parseBoxHeader(buffer, offset);
-    info.boxes.push({
-      type: header.type,
-      size: header.size
-    });
-    
-    if (header.type === 'moof') {
-      // Parse moof box to get sequence number
-      let currentOffset = offset + 8;
-      while (currentOffset < offset + header.size) {
-        const subHeader = parseBoxHeader(buffer, currentOffset);
-        if (subHeader.type === 'mfhd') {
-          info.moofSequence = buffer.readUInt32BE(currentOffset + 12);
-          break;
-        }
-        currentOffset += subHeader.size;
-      }
-    }
-    
-    offset += header.size;
-  }
-  
-  return info;
-}
-
-/**
- * Modify MOOF sequence in M4S buffer
- */
-function modifyMoofSequence(buffer, newSequence) {
-  const modifiedBuffer = Buffer.from(buffer);
-  let offset = 0;
-  let modified = false;
-
-  while (offset < buffer.length) {
-    const header = parseBoxHeader(buffer, offset);
-    
-    if (header.type === 'moof') {
-      let currentOffset = offset + 8;
-      while (currentOffset < offset + header.size) {
-        const subHeader = parseBoxHeader(buffer, currentOffset);
-        if (subHeader.type === 'mfhd') {
-          modifiedBuffer.writeUInt32BE(newSequence, currentOffset + 12);
-          modified = true;
-          break;
-        }
-        currentOffset += subHeader.size;
-      }
-    }
-    
-    offset += header.size;
-  }
-
-  if (!modified) {
-    throw new Error('No MOOF box found in the file');
-  }
-
-  return modifiedBuffer;
-}
-
-/**
- * Parse path to extract track ID and target sequence
- * Example: "/AD001/chunk-stream2-86293.m4s" -> { trackId: 2, targetSequence: 86293 }
- */
-function parseM4sPath(path) {
-  const match = path.match(/(\d+)-(\d+)\.m4s$/);
-  if (!match) {
-    throw new Error('Invalid m4s path format');
-  }
-  return {
-    trackId: parseInt(match[1], 10),
-    targetSequence: parseInt(match[2], 10)
-  };
-}
 
 // Add route for M4S requests
 app.get('*.m4s', async (req, res) => {
