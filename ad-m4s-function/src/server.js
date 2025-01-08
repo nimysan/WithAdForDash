@@ -4,9 +4,30 @@ const path = require('path');
 const https = require('https');
 const http = require('http');
 const { URL } = require('url');
+const cluster = require('cluster');
+const numCPUs = require('os').cpus().length;
 
 const app = express();
 const port = 3000;
+
+if (cluster.isPrimary) {
+  console.log(`Primary process ${process.pid} is running`);
+
+  // Fork workers based on CPU count
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork();
+  }
+
+  cluster.on('exit', (worker, code, signal) => {
+    console.log(`Worker ${worker.process.pid} died (${signal || code}). Restarting...`);
+    cluster.fork();
+  });
+
+  // Log when a worker connects
+  cluster.on('online', (worker) => {
+    console.log(`Worker ${worker.process.pid} is online`);
+  });
+} else {
 
 /**
  * Parse box header
@@ -115,7 +136,7 @@ app.get('*.m4s', async (req, res) => {
     // Read original m4s file from local path
     const offset = targetSequence%10;
     console.log("offset === "  + offset)
-    const originalM4sPath = path.join(__dirname,"AD001" ,trackId+'-'+(38304768+offset)+'.m4s');
+    const originalM4sPath = path.join(__dirname, "..", "assets", "AD001", trackId+'-'+(38304768+offset)+'.m4s');
     console.log('Reading from:', originalM4sPath);
     const m4sData = fs.readFileSync(originalM4sPath);
     
@@ -152,18 +173,19 @@ app.get('/', (req, res) => {
   res.send('M4S Processing Server');
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+  // Start server in worker process
+  app.listen(port, () => {
+    console.log(`Worker ${process.pid} is listening on port ${port}`);
+  });
 
-// Handle process termination
-process.on('SIGTERM', () => {
-  console.log('Received SIGTERM, shutting down...');
-  process.exit(0);
-});
+  // Handle process termination for workers
+  process.on('SIGTERM', () => {
+    console.log(`Worker ${process.pid} received SIGTERM, shutting down...`);
+    process.exit(0);
+  });
 
-process.on('SIGINT', () => {
-  console.log('Received SIGINT, shutting down...');
-  process.exit(0);
-});
+  process.on('SIGINT', () => {
+    console.log(`Worker ${process.pid} received SIGINT, shutting down...`);
+    process.exit(0);
+  });
+}

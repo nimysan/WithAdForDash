@@ -5,8 +5,15 @@
   "main": "handler.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "m4s":"echo read m4s metadata",
-    "server":"node server.js"
+    "m4s": "echo read m4s metadata",
+    "start": "pm2 start ecosystem.config.js",
+    "stop": "pm2 stop m4s-server",
+    "restart": "pm2 restart m4s-server",
+    "reload": "pm2 reload m4s-server",
+    "delete": "pm2 delete m4s-server",
+    "status": "pm2 status",
+    "logs": "pm2 logs",
+    "monit": "pm2 monit"
   },
   "dependencies": {
     "aws-cdk-lib": "^2.0.0",
