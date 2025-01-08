@@ -110,6 +110,8 @@ app.get('*.m4s', async (req, res) => {
     const { targetSequence, trackId } = parseM4sPath(req.path);
     console.log(`Track ID: ${trackId}, Target sequence: ${targetSequence}`);
 
+    
+
     // Read original m4s file from local path
     const originalM4sPath = path.join(__dirname,"AD001" ,trackId+'-38304768.m4s');
     console.log('Reading from:', originalM4sPath);
@@ -122,6 +124,7 @@ app.get('*.m4s', async (req, res) => {
     console.log('Box structure:', originalInfo.boxes.map(b => `${b.type} (${b.size} bytes)`).join(' -> '));
 
     // Modify m4s with new sequence
+    targetSequence = targetSequence - 38306941;
     const modifiedData = modifyMoofSequence(m4sData, targetSequence);
 
     // Parse modified m4s info
