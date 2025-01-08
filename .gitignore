@@ -8,7 +8,7 @@ __pycache__/
 .pytest_cache/
 
 # Media files
-*.m4s
+# *.m4s
 *.mp4
 *.mpd
 sample_response.json
