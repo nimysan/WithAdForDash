@@ -55,7 +55,7 @@ app.get('*.m4s', async (req, res) => {
 
     // Modify m4s with new sequence
     // targetSequence = targetSequence - 38306941;
-    const modifiedData = modifyMoofSequence(m4sData, targetSequence - 38306941);
+    const modifiedData = modifyMoofSequence(m4sData, targetSequence);
 
     // Parse modified m4s info
     console.log('\nModified M4S Info:');
