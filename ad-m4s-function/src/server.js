@@ -35,8 +35,8 @@ if (cluster.isPrimary) {
 app.get('*.m4s', async (req, res) => {
   try {
     // Get target sequence and track ID from path
-    const { targetSequence, trackId } = parseM4sPath(req.path);
-    console.log(`Track ID: ${trackId}, Target sequence: ${targetSequence}`);
+    const { sn, targetSequence, trackId } = parseM4sPath(req.path);
+    console.log(` SN ${sn} Track ID: ${trackId}, Target sequence: ${targetSequence}`);
 
     
 
@@ -66,6 +66,45 @@ app.get('*.m4s', async (req, res) => {
     // Send response
     res.setHeader('Content-Type', 'application/octet-stream');
     res.send(modifiedData);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      message: 'Internal Server Error',
+      error: error.message
+    });
+  }
+});
+
+// Parse M4S from URL endpoint
+app.get('/tool/parsem4s.json', async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) {
+      return res.status(400).json({ error: 'URL parameter is required' });
+    }
+
+    // Download the m4s file
+    const urlObj = new URL(url);
+    const protocol = urlObj.protocol === 'https:' ? https : http;
+    
+    const m4sData = await new Promise((resolve, reject) => {
+      protocol.get(url, (response) => {
+        if (response.statusCode !== 200) {
+          reject(new Error(`Failed to download m4s file: ${response.statusCode}`));
+          return;
+        }
+
+        const chunks = [];
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => resolve(Buffer.concat(chunks)));
+      }).on('error', reject);
+    });
+
+    // Parse the m4s file
+    const info = parseM4S(m4sData);
+    
+    // Send response
+    res.json(info);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({

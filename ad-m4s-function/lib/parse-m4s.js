@@ -188,14 +188,27 @@ function parseM4S(buffer) {
  * @returns {Object} 解析结果
  */
 function parseM4sPath(path) {
-  const match = path.match(/(\d+)-(\d+)\.m4s$/);
-  if (!match) {
-    throw new Error('Invalid m4s path format');
+  // Handle both formats:
+  // 1. /sn-number/trackId-sequence.m4s
+  // 2. /trackId-sequence.m4s
+  const snMatch = path.match(/\/([^/]+)\/(\d+)-(\d+)\.m4s$/);
+  if (snMatch) {
+    return {
+      sn: snMatch[1],
+      trackId: parseInt(snMatch[2], 10),
+      targetSequence: parseInt(snMatch[3], 10)
+    };
   }
-  return {
-    trackId: parseInt(match[1], 10),
-    targetSequence: parseInt(match[2], 10)
-  };
+
+  const simpleMatch = path.match(/(\d+)-(\d+)\.m4s$/);
+  if (simpleMatch) {
+    return {
+      trackId: parseInt(simpleMatch[1], 10),
+      targetSequence: parseInt(simpleMatch[2], 10)
+    };
+  }
+
+  throw new Error('Invalid m4s path format');
 }
 
 /**
