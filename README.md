@@ -98,3 +98,7 @@ aws configure
 
 M4S (MPEG-4 Segment) 是DASH流媒体使用的文件格式。详细信息可参考：
 https://docs.fileformat.com/zh/video/m4s/
+
+[了解m4s格式](https://blog.csdn.net/W1107101310/article/details/139359904)
+
+https://blog.csdn.net/W1107101310/article/details/139359904
