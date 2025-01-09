@@ -43,7 +43,7 @@ app.get('*.m4s', async (req, res) => {
     // Read original m4s file from local path
     const offset = targetSequence%10;
     console.log("offset === "  + offset)
-    const originalM4sPath = path.join(__dirname, "..", "assets", "AD001", trackId+'-'+(38304768+offset)+'.m4s');
+    const originalM4sPath = path.join(__dirname, "..", "assets", sn, trackId+'-'+(38304768+offset)+'.m4s');
     console.log('Reading from:', originalM4sPath);
     const m4sData = fs.readFileSync(originalM4sPath);
     
