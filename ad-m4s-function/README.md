@@ -54,33 +54,37 @@ mkdir -p assets/AD001
 
 ### 文件结构
 M4S 文件主要包含以下 box：
-- ftyp: 文件类型信息
-- styp: 片段类型信息
-- sidx: 片段索引信息
-- moof: 片段元数据（包含序列号）
+- ftyp: 文件类型信息（包含主要品牌、版本和兼容品牌）
+- styp: 片段类型信息（包含主要品牌、版本和兼容品牌）
+- sidx: 片段索引信息（包含版本、引用ID、时间刻度和最早PTS）
+- moof: 片段元数据（包含序列号和其他元数据信息）
 - mdat: 实际媒体数据
+- moov: 影片信息（包含多个子box）
 
 ### 文件存放规则
 
-1. 文件组织结构：`assets/{SN}/{trackId}-{sequence}.m4s`
+1. 文件组织结构支持两种格式：
+
+   新格式：`assets/{SN}/{program}/{trackId}-{sequence}.m4s`
    - SN: 广告标识目录（如 AD001）
+   - program: 节目标识
    - trackId: 轨道ID（0-4）
      * 0: 视频轨道
      * 1: 主音频轨道
      * 2-4: 备用音频轨道
    - sequence: 序列号（用于片段排序和连接）
 
-2. 请求路径格式：`/{SN}/{trackId}-{sequence}.m4s`
-   - 请求 `/AD001/0-38312610.m4s` 会匹配 `assets/AD001/0-38312610.m4s` 文件
+   旧格式：`assets/{trackId}-{sequence}.m4s`（向后兼容）
+   - trackId: 轨道ID（0-4）
+   - sequence: 序列号
 
-例如：
-```
-assets/
-└── AD001/                    # 广告标识目录
-    ├── 0-38312610.m4s       # 视频轨道
-    ├── 1-38312610.m4s       # 主音频轨道
-    └── 2-38312610.m4s       # 备用音频轨道
-```
+2. 请求路径格式：
+   - 新格式：`/{SN}/{program}/{trackId}-{sequence}.m4s`
+   - 旧格式：`/{trackId}-{sequence}.m4s`
+
+示例：
+- 新格式：`/AD001/P001/0-38312610.m4s` 会匹配 `assets/AD001/P001/0-38312610.m4s`
+- 旧格式：`/0-38312610.m4s` 会匹配 `assets/0-38312610.m4s`
 
 ### 序列号说明
 - 序列号用于确定片段的播放顺序
@@ -148,19 +152,35 @@ npm run monit
 GET /tool/parsem4s.json?url={m4s-file-url}
 ```
 
-返回 M4S 文件的详细解析信息。
+返回 M4S 文件的详细解析信息，包括：
+- boxes: 文件中所有box的类型和大小列表
+- moofSequence: moof box中的序列号
+- details: 各个box的详细解析信息
+  - ftyp: 文件类型信息（主要品牌、版本、兼容品牌）
+  - styp: 片段类型信息（主要品牌、版本、兼容品牌）
+  - sidx: 片段索引信息（版本、引用ID、时间刻度、最早PTS）
+  - moof: 片段元数据（大小、序列号）
+  - mdat: 媒体数据大小
+  - moov: 影片信息（大小、子box列表）
 
 ### 2. M4S 文件请求
 
 ```
-GET /{SN}/{trackId}-{sequence}.m4s
+GET /{SN}/{program}/{trackId}-{sequence}.m4s
 ```
 
+新格式：
 - SN: 广告标识（如 AD001）
+- program: 节目标识（如 P001）
 - trackId: 轨道ID（0-4）
 - sequence: 序列号（数字）
 
-例如：`/AD001/0-38312610.m4s`
+例如：`/AD001/P001/0-38312610.m4s`
+
+旧格式：
+```
+GET /{trackId}-{sequence}.m4s
+```
 
 ## 使用示例
 
@@ -186,8 +206,9 @@ npm run logs
 
 ## 注意事项
 
-1. 确保 assets/AD001 目录中包含所需的 M4S 文件
+1. 确保 assets 目录中包含所需的 M4S 文件，并按照正确的目录结构组织
 2. 服务使用 PM2 进行进程管理，确保系统已安装 PM2
 3. 默认监听 3000 端口，如需修改可在 src/server.js 中更改
 4. 服务会自动根据 CPU 核心数启动多个工作进程
 5. 建议定期查看日志确保服务运行正常
+6. 新旧路径格式共存，但新请求建议使用新格式以支持更多功能

@@ -183,28 +183,36 @@ function parseM4S(buffer) {
 }
 
 /**
- * Parse path to extract track ID and target sequence
- * @param {string} path - M4S文件路径
+ * Parse path to extract sn, program, track and segment
+ * @param {string} path - M4S文件路径，格式: /{sn}/{program}/{track}-{segment}.m4s
  * @returns {Object} 解析结果
  */
 function parseM4sPath(path) {
-  // Handle both formats:
-  // 1. /sn-number/trackId-sequence.m4s
-  // 2. /trackId-sequence.m4s
-  const snMatch = path.match(/\/([^/]+)\/(\d+)-(\d+)\.m4s$/);
-  if (snMatch) {
+  // Handle formats:
+  // 1. /{sn}/{program}/{track}-{segment}.m4s (new format)
+  // 2. /trackId-sequence.m4s (legacy format)
+  // First try to match the new format
+  const newFormatMatch = path.match(/\/([^/]+)\/([^/]+)\/(\d+)-(\d+)\.m4s$/);
+  if (newFormatMatch) {
     return {
-      sn: snMatch[1],
-      trackId: parseInt(snMatch[2], 10),
-      targetSequence: parseInt(snMatch[3], 10)
+      sn: newFormatMatch[1],
+      program: newFormatMatch[2],
+      track: parseInt(newFormatMatch[3], 10),
+      segment: parseInt(newFormatMatch[4], 10)
     };
   }
 
-  const simpleMatch = path.match(/(\d+)-(\d+)\.m4s$/);
-  if (simpleMatch) {
+  // Only try legacy format if the path doesn't start with a potential SN
+  const hasLeadingSN = path.match(/^\/[^/]+\//);
+  if (hasLeadingSN) {
+    throw new Error('Invalid m4s path format');
+  }
+
+  const legacyMatch = path.match(/^\/(\d+)-(\d+)\.m4s$/);
+  if (legacyMatch) {
     return {
-      trackId: parseInt(simpleMatch[1], 10),
-      targetSequence: parseInt(simpleMatch[2], 10)
+      track: parseInt(legacyMatch[1], 10),
+      segment: parseInt(legacyMatch[2], 10)
     };
   }
 

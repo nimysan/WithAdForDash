@@ -34,16 +34,14 @@ if (cluster.isPrimary) {
 // Add route for M4S requests
 app.get('*.m4s', async (req, res) => {
   try {
-    // Get target sequence and track ID from path
-    const { sn, targetSequence, trackId } = parseM4sPath(req.path);
-    console.log(` SN ${sn} Track ID: ${trackId}, Target sequence: ${targetSequence}`);
-
-    
+    // Get path parameters
+    const { sn, program, track, segment } = parseM4sPath(req.path);
+    console.log(` SN: ${sn}, Program: ${program}, Track: ${track}, Segment: ${segment}`);
 
     // Read original m4s file from local path
-    const offset = targetSequence%10;
+    const offset = segment%10;
     console.log("offset === "  + offset)
-    const originalM4sPath = path.join(__dirname, "..", "assets", sn, trackId+'-'+(38304768+offset)+'.m4s');
+    const originalM4sPath = path.join(__dirname, "..", "assets", sn, program, track+'-'+(38304768+offset)+'.m4s');
     console.log('Reading from:', originalM4sPath);
     const m4sData = fs.readFileSync(originalM4sPath);
     
@@ -54,8 +52,7 @@ app.get('*.m4s', async (req, res) => {
     console.log('Box structure:', originalInfo.boxes.map(b => `${b.type} (${b.size} bytes)`).join(' -> '));
 
     // Modify m4s with new sequence
-    // targetSequence = targetSequence - 38306941;
-    const modifiedData = modifyMoofSequence(m4sData, targetSequence);
+    const modifiedData = modifyMoofSequence(m4sData, segment);
 
     // Parse modified m4s info
     console.log('\nModified M4S Info:');
